@@ -1,0 +1,52 @@
+---
+title: "my-vignette"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{my-vignette}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+
+This package has two functions related to solving classical Sudoku's. The first function can solve the Sudoku while the second function can give hints to solve the Sudoku. There are different brute force algorithms that can solve a Sudoku. The problem with those algorithms is that they cannot provide a hint based on an actual technique to solve a sudoku, they can just provide you with a number. This function resolves this by utilizing actual techniques to solve the Sudoku. 
+
+Before explaining what those techniques are, first a short explanation on what Sudoku's are. Sudoku's are a number based puzzles that can be solved by logic. The classical Sudoku has a 9x9 grid. Within this grid there are 9 3x3 subgrids called boxes. Every cell can contain the numbers 1 to 9. To get a puzzle the Sudoku is partly completed. The goal is to get to a solution where every row, column or box contains all the digits from 1 to 9. These simple rules result can complex situations where some very difficult techniques are needed to solve them. There are dozens of different strategy families ranging from very simple to extremely difficult. This Sudoku solver uses the simple to medium complex strategies. This is enough to solve the vast majority of Sudoku's. Only the most difficult Sudoku's can cause a problem. 
+
+Some explanation of the used definitions is required to completely understand the explanation of the techniques. 
+- Line: this is the general term for a row or column. The numbering of the lines is from 1 to 9, left to right and up to down.
+- Box: the 3x3 subgrids. These boxes are numbered from 1 to 9. The top left box is 1, the top right box is 3, the down left box is 7 and the down right box is 9. 
+- Cell/spot: both indicate a single position in the 9x9 grid that can contain a number. 
+- Index: The index of a cell is denoted as follows RxCy where x is the row and y is the column. So the cell in the top left corner is R1C1, the most middle cell is R5C5 and the down right cell is R9C9. 
+- Possibilities/candidates. The set of numbers that are still possible to be in a certain cell or cells. 
+- See/influence: A number in a certain cell limits the possibilities of other cells. When a number is in R2C2, that number cannot be in row 2, column 2 or box 1. We thus say that R2C2 sees or influences all the other cells in row 2, column 2 and box 1. 
+- Elimination/reduction: The numbers in the cells make it impossible for that number to be in the cells they see. When this happens a number is eliminated or reduced from that cell. 
+
+Overall, this Sudoku solver uses ten different strategy families. They are as follows. 
+
+1) Lone singles: This is the situation where only spot in a line or box is empty. The only number that is not in this line or box must thus the number in this spot. 
+2) Hidden singles: When a number is eliminated from every spot in a line or a box. This is different than lone singles because less than 8 cells can be filled in. The elimination of that number in empty cells in that line or box can result in the situation where a number can go in only one spot. A hidden single is a generalized form of the lone singles. Every lone single is also a hidden single 
+3) Lone singles: If cells with different 8 numbers all see a single cell, there is only one option for this cell left. This is called a lone single. 
+4) Pointing pairs or triples: If a number is limited to one line in a single box, this number cannot be in that line in the other two boxes on that line. 
+5) Box line reduction: this is the reversed logic of pointing pairs. When the possibilities of a number on a single line are limited to one box, that number cannot be in other lines of that same type (row or column) in that box. 
+6) Naked pairs, triplets or quadruples: If n cells in a line or a box have only n options, and that n options are the same, those numbers cannot be in another cell in that line or box. For example, if R1C1 and R1C2 both only have numbers 5 and 6 as options, those numbers cannot be in other cells in box 1. If R2C2 would be 5, 6 would be the only option for both R1C1 and R1C2. R1C1 and R1C2 thus form a naked pair. Naked triples and naked quads have the same logic but than for 3 or 4 cells and numbers. 
+7) Hidden pairs, triplets or quadruples: When n numbers are limited to the same n cells in a line or a box, other numbers cannot be in those cells. For example. If the numbers 2 and 3 are limited to R4C6 and R8C6, other numbers cannot be in those two cells. If we would place a 1 in R4C6 both 2 and 3 are limited to R8C6 which is impossible. R4C6 and R8C6 thus form a hidden pair. Situation for 3 and 4 cells are called hidden triplets and hidden quadruples. 
+8) X-wings, swordfishes and jellyfishes. When there are only n options for a number in n different lines of the same kind and those n options are in n lines of the other kind of lines, all other cells in the last n lines cannot contain that number. An example to clarify. When 8 is in column 1  R1C1 and R9C1 and in column 9 to R1C9 and R9C9, Every other spot in R1 and R9 cannot contain 8. If 8 is in R1C1, it must also be in R9C9. R1C1 and R9C9 together see all the other cells in R1 and R9. When 8 is in R9C1 it must be in R1C9 and the same cells are seen. This means that 8 can be removed as a canditate from those cells because it forms a x-wing. The same logic can be applied when a number is in 3 or 4 lines. These are called swordfishes and jellyfishes. 
+9) Y-wings: An Y-wing is when cell 1 one with only candidates A and B sees both cell 2 with candidates A and C and cell 3 with candidates B and C. One of cell 2 and 3 must thus always have candidate C and thus C can be removed from cells that see both cell 2 and 3. For example, if R1C1 has 3 and 4 as options. R1C4 has 3 and 9 as options and R2C1 has 4 and 9 as options. If R1C1 is 3, R1C4 is 9. If R1C1 is 4, R2C1 is 9. R2C4, R2C5 and R2C6 are seen by both R1C4 and R2C1. That means that 9 can never be in those three cells. 
+10) Skyscraper: A skyscraper is similar to an x-wing, with one exaption. The lines don't completely align. If 7 is limited to R6C1 and R6C4 and in in column 1 the other options are R1C1 and R2C1 and in column 4 the other option is R1C4, 7 is always in one of those three cells. That means that R1C2 and R1C3 cannot be a 7. 
+
+Together, these 10 strategies will be able to solve a Sudoku often. This package has two main function. One function simply solve the Sudoku called solveSudoku. The only input is a Sudoku. It handles different types of inputs quite well. The input can both be a matrix or data.frame. Empty spots can be denoted with a zero or an NA. This input is transformed to a workable format and given the an S3 class. The first step in solving the Sudoku is to create a list with 9 9x9 matrices. One for every number. This list is used to keep track in which spots a certain number can still be. After this, the functions uses the 10 different strategies one by one until the Sudoku is solved or it can find a solution. In the later scenario it will print a message. If a solution is found it does three things. First it returns the object with class Sudoku. Second, it checks if the solution is correct and prints if it is or not. Thirdly, it plots the Sudoku. The returned Sudoku can be saved and plotted again later by simply using plot(Sudoku) if desired. 
+
+The other option is to ask for hints to solve the Sudoku called sudokuHint. Besides the Sudoku input (which is the same as as for solveSudoku) there is an option to get a hint for a certain strategy or for get hints for all strategies. When the users select the option to look for a certain strategy the user gets a prompt to select a number for a option. Next all insistence where that strategy can be used to eliminate a number from a cell are recorded. If no hint can be genarated the function stops. If one or multiple hint can be generated they are shown one by one in both a plot and explained in the console. After every hint the user can ask for the next hint or stop. If all hints are shown or the user end the list with hint before they are all shown they can start the generation of new hints and the process starts again.
+
+If the user selects the option to get all the hints all strategies are used to get those hints and are shown in the same way as before. When all the generated hints are shown or the user terminated the displaying of the hints, a prompt asks the user if they want to process the hints. If selected, the hints are solved. When not all hints are shown, the hints until the last shown strategy are processed. So if the user stops at the hints for y-wings, all the hints for y-wings won't pre processed. The reason for this is stop the function from processing hints the user did not see. The function cannot process a hint directly and thus this less elegant solution is chosen. When the hints are processed the user can ask for a new set of hints until the Sudoku is finished. This function again returns the Sudoku. However, when the user stopped before the hints resulted in a solved Sudoku, a partly completed Sudoku is returned. 
+
+
+
+
